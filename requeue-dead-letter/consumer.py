@@ -7,7 +7,6 @@ connection = pika.BlockingConnection(connection_param)
 channel = connection.channel()
 
 channel.queue_declare(queue='pang-queue', arguments={
-    'x-message-ttl': 30000,
     'x-dead-letter-exchange': 'pang-dead-letter-exchange',
     'x-dead-letter-routing-key': 'pang-queue'
 })
@@ -27,15 +26,19 @@ def callback(ch, method, properties, body):
         channel.basic_ack(delivery_tag=method.delivery_tag)
     except:
         print("This is ODD")
-        properties.headers.set('x-dead-letter-reason', 'This number is odd')
+        # properties.headers.set('x-dead-letter-reason', 'This number is odd')
         channel.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
 
 # dead letter
 channel.exchange_declare(exchange='pang-dead-letter-exchange', exchange_type='fanout')
-channel.queue_declare(queue='pang-dead-letter')
+channel.queue_declare(queue='pang-dead-letter', arguments={
+    'x-message-ttl': 30000,
+    'x-dead-letter-exchange': 'pang-exchange',
+    'x-dead-letter-routing-key': 'pang-queue'
+})
 channel.queue_bind(queue='pang-dead-letter', exchange='pang-dead-letter-exchange')
 
-#cosume
+#consume
 channel.basic_consume(queue='pang-queue', on_message_callback=callback)
 
 print('Starting Consuming')

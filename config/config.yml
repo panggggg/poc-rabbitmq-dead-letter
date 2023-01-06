@@ -1,0 +1,21 @@
+rabbitmq:
+    host: "localhost"
+    port: 5672
+    user: "root"
+    password: "root"
+    setting:
+      - name: "fetch-timeline"
+        job:
+          queue: "main:queue"
+          dlx:
+            delay: 10000
+            exchange: "main:dlx"
+            exchange_type: "direct"
+            retry_queue: "main:queue:retry"
+          prefetch_count: 1
+        exchange_name: "main:exchange"
+        exchange_type: "direct"
+        result:
+          - queue: "result:queue"
+        retry: 2
+        error: "main:queue:error"
